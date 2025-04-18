@@ -1,0 +1,251 @@
+@startuml
+
+' GameCharacter and Subclasses
+abstract class GameCharacter {
+    String name
+    int health
+    int experiencePoints
+    int level
+    State currentState
+    + void accept(CharacterVisitor visitor)
+    + GameCharacter clone()
+    + void addObserver(Observer observer)
+    + void removeObserver(Observer observer)
+    + void notifyObservers(String event)
+    + int attack(int baseDamage)
+    + void tryToMove()
+    + void setHealth(int health)
+    + int getHealth()
+    + void setState(State state)
+    + State getState()
+}
+
+class Warrior extends GameCharacter {
+    int strength
+    + Warrior clone()
+}
+
+class Wizard extends GameCharacter {
+    int intelligence
+    + Wizard clone()
+}
+
+GameCharacter "1" *-- "1" State
+
+' State Pattern
+interface State {
+    + void onEnterState(GameCharacter character)
+    + void onUpdate(GameCharacter character)
+    + void onTryToMove(GameCharacter character)
+    + void onAttack(GameCharacter character)
+}
+
+class NormalState implements State {
+    + void onEnterState(GameCharacter character)
+    + void onUpdate(GameCharacter character)
+    + void onTryToMove(GameCharacter character)
+    + void onAttack(GameCharacter character)
+}
+
+class WoundedState implements State {
+    + void onEnterState(GameCharacter character)
+    + void onUpdate(GameCharacter character)
+    + void onTryToMove(GameCharacter character)
+    + void onAttack(GameCharacter character)
+}
+
+class ScaredState implements State {
+    + void onEnterState(GameCharacter character)
+    + void onUpdate(GameCharacter character)
+    + void onTryToMove(GameCharacter character)
+    + void onAttack(GameCharacter character)
+}
+
+class DeadState implements State {
+    + void onEnterState(GameCharacter character)
+    + void onUpdate(GameCharacter character)
+    + void onTryToMove(GameCharacter character)
+    + void onAttack(GameCharacter character)
+}
+
+' Decorator Pattern
+abstract class CharacterDecorator extends GameCharacter {
+    - GameCharacter decoratedCharacter
+    + CharacterDecorator(GameCharacter character)
+    + void accept(CharacterVisitor visitor)
+    + int attack(int baseDamage)
+    + void tryToMove()
+    + void setHealth(int health)
+    + int getHealth()
+}
+
+class ArmoredDecorator extends CharacterDecorator {
+    - int armorValue
+    + ArmoredDecorator(GameCharacter character, int armorValue)
+    + int defend(int baseDamage)
+}
+
+class InvincibleDecorator extends CharacterDecorator {
+    + InvincibleDecorator(GameCharacter character)
+    + void setHealth(int health)
+}
+
+GameCharacter <|-- CharacterDecorator
+CharacterDecorator <|-- ArmoredDecorator
+CharacterDecorator <|-- InvincibleDecorator
+
+' Visitor Pattern
+interface CharacterVisitor {
+    + void visit(Warrior warrior)
+    + void visit(Wizard wizard)
+}
+
+class BuffVisitor implements CharacterVisitor {
+    + void visit(Warrior warrior)
+    + void visit(Wizard wizard)
+}
+
+class DamageVisitor implements CharacterVisitor {
+    + void visit(Warrior warrior)
+    + void visit(Wizard wizard)
+}
+
+class HealVisitor implements CharacterVisitor {
+    + void visit(Warrior warrior)
+    + void visit(Wizard wizard)
+}
+
+GameCharacter *-- CharacterVisitor
+
+CharacterVisitor <|.. BuffVisitor
+CharacterVisitor <|.. DamageVisitor
+CharacterVisitor <|.. HealVisitor
+
+' Factory Pattern
+interface CharacterCreator {
+    + GameCharacter createCharacter(String name)
+}
+
+class WarriorCreator implements CharacterCreator {
+    + GameCharacter createCharacter(String name)
+}
+
+class WizardCreator implements CharacterCreator {
+    + GameCharacter createCharacter(String name)
+}
+
+CharacterCreator <|.. WarriorCreator
+CharacterCreator <|.. WizardCreator
+
+WarriorCreator ..> Warrior : creates
+WizardCreator ..> Wizard : creates
+
+' Prototype Pattern
+class Team {
+    String name
+    + void addPlayer(GameCharacter player)
+    + void removePlayer(GameCharacter player)
+    + GameCharacter getPlayer(String name)
+    + boolean containsPlayer(GameCharacter player)
+    + Team clone()
+}
+
+Team "1" *-- "1..*" GameCharacter
+
+' Configuration Singleton
+class GameConfiguration {
+    - static GameConfiguration instance
+    int difficultyLevel
+    int maxTeamSize
+    + static GameConfiguration getInstance()
+}
+
+' Builder Pattern
+class TeamBuilder {
+    + TeamBuilder(String name)
+    + TeamBuilder addWarrior(String name)
+    + TeamBuilder addWizard(String name)
+    + Team build()
+}
+
+TeamBuilder *-- Team
+
+' Observer Pattern
+interface Observer {
+    + void update(GameCharacter character, String event)
+}
+
+class DeathObserver implements Observer {
+    + void update(GameCharacter character, String event)
+}
+
+class LevelUpObserver implements Observer {
+    + void update(GameCharacter character, String event)
+}
+
+class Subject {
+    + void addObserver(Observer observer)
+    + void removeObserver(Observer observer)
+    + void notifyObservers(GameCharacter character, String event)
+}
+
+Subject "1" *-- "0..*" Observer
+GameCharacter "1" *-- "0..*" Observer
+
+' Command Pattern
+interface Command {
+    + void execute()
+    + void undo()
+}
+
+class HealCommand implements Command {
+    - Team team
+    - Map<GameCharacter, Integer> originalHealth
+    + HealCommand(Team team)
+    + void execute()
+    + void undo()
+}
+
+class BuffCommand implements Command {
+    - Team team
+    + BuffCommand(Team team)
+    + void execute()
+    + void undo()
+}
+
+class AttackCommand implements Command {
+    - Team attacker
+    - Team defender
+    + AttackCommand(Team attacker, Team defender)
+    + void execute()
+    + void undo()
+}
+
+class GameInvoker {
+    - List<Command> commandQueue
+    - Stack<Command> commandHistory
+    + void addCommand(Command command)
+    + void executeCommands()
+    + void undoLastCommand()
+}
+
+GameInvoker "1" *-- "0..*" Command
+
+' Facade Pattern
+class GameFacade {
+    + void addTeam(Team team)
+    + void removeTeam(Team team)
+    + Team getTeam(String name)
+    + List<Team> getAllTeams()
+    + void teamAttack(Team attacker, Team defender)
+    + void healTeam(Team team)
+    + void buffTeam(Team team)
+    + GameCharacter decorateCharacter(GameCharacter character, Class<? extends CharacterDecorator> decoratorClass)
+    + void removeDecorator(GameCharacter character)
+    + void listTeams()
+}
+
+GameFacade o-- Team
+GameFacade o-- GameCharacter
+
+@enduml
